@@ -1,3 +1,4 @@
+import CampusReels from "./pages/CampusReels.jsx";
 import Events from "./pages/Events.jsx";
 import { Toaster } from "react-hot-toast";
 import React from "react";
@@ -139,6 +140,8 @@ function AppContent() {
             path="/create"
             element={isLoggedIn ? <><Navbar /><CreatePost /></> : <Navigate to="/" />}
           />
+
+          <Route path="/reels" element={<ProtectedRoute><Navbar /><CampusReels /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
