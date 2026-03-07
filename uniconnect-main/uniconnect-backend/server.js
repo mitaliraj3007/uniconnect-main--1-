@@ -1,4 +1,5 @@
 // server.js
+import reelRoutes from "./routes/reelRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import itemRoutes from "./routes/ItemRoutes.js";
 import express from "express";
@@ -23,6 +24,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/reels", reelRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
