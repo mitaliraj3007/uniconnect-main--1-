@@ -1,0 +1,9 @@
+# Ignore Node modules
+uniconnect/node_modules
+uniconnect-backend/node_modules
+
+# Ignore environment files
+**/.env
+
+# Ignore system files
+.DS_Store
