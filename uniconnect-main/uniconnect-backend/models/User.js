@@ -7,7 +7,16 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true }, // Add password field
   college: { type: String },
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  profilePic: { type: String, default: "" },
+  bio: { type: String, default: "" },
+  branch: { type: String, default: "Computer Science" },
+  year: { type: String, default: "1st Year" },
+  preferences: {
+    isDark: { type: Boolean, default: true },
+    isPrivate: { type: Boolean, default: false },
+    notifications: { type: Boolean, default: true }
+  }
 }, { timestamps: true });
 
 userSchema.pre("save", async function (next) {
