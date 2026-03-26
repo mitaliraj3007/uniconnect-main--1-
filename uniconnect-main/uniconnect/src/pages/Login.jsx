@@ -1,154 +1,172 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { API_BASE_URL } from "../config/api";
 
-export default function Login({ onLogin }) {
-  const [isLogin, setIsLogin] = useState(true);
-  const [isLoading, setIsLoading] = useState(false); // ✅ Spinner state
-  const navigate = useNavigate();
+export default function Login({ onLogin, onGuestLogin, onAdminLogin }) {
+  // Toggle between Login and Sign Up
+  const [isLogin, setIsLogin] = useState(true); 
 
-  // ✅ React Hook Form setup for professional validation
-  const { register, handleSubmit, formState: { errors }, reset } = useForm();
+  const [selectedCollege, setSelectedCollege] = useState("");
+  const [username, setUsername] = useState(""); // Only used for Sign Up
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const onSubmit = async (data) => {
-    setIsLoading(true);
-    const endpoint = isLogin ? "/auth/login" : "/auth/register";
+  const universities = [
+    "Chandigarh University",
+    "Indian Institute of Technology (IIT)",
+    "National Institute of Technology (NIT)",
+    "Delhi University",
+    "Vellore Institute of Technology",
+    "BITS Pilani"
+  ];
+
+  // --- REGISTRATION LOGIC ---
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (!selectedCollege || !username || !email || !password) {
+      toast.error("Please fill in all fields!");
+      return;
+    }
 
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ username, email, password }), // Send new user data
       });
 
-      const resData = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("token", resData.token);
-        
-        // ✅ Beautiful success toast instead of alert()
-        toast.success(isLogin ? "Welcome back!" : "Account created successfully!");
-        
-        onLogin(resData.user || { name: data.username || data.email.split("@")[0], email: data.email }); 
-        navigate("/select-college");
+      if (res.ok) {
+        const newUser = await res.json();
+        toast.success("Account created successfully!");
+        onLogin(newUser, selectedCollege); // Log them in immediately!
       } else {
-        // ✅ Beautiful error toast
-        toast.error(resData.message || `${isLogin ? "Login" : "Sign up"} failed.`);
+        const errData = await res.json();
+        toast.error(errData || "Failed to create account.");
       }
-    } catch (error) {
-      toast.error("Server connection failed. Is your backend running?");
-    } finally {
-      setIsLoading(false); // Turn off spinner
+    } catch (err) {
+      toast.error("Server error. Is the backend running?");
     }
   };
 
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    reset(); // Clear errors when switching modes
-  };
+  // --- LOGIN LOGIC ---
+  const handleStandardLogin = async (e) => {
+    e.preventDefault();
+    if (!selectedCollege || !email || !password) {
+      toast.error("Please fill in all fields!");
+      return;
+    }
 
-  const handleGuestLogin = () => {
-    onLogin({ name: "Guest User", email: "guest@gmail.com" });
-    navigate("/select-college");
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (res.ok) {
+        const realUserData = await res.json();
+        onLogin(realUserData, selectedCollege);
+        toast.success(`Welcome back, ${realUserData.username}!`);
+      } else {
+        toast.error("Invalid email or password!");
+      }
+    } catch (err) {
+      toast.error("Server error. Is the backend running?");
+    }
   };
 
   return (
-    <motion.div
-      className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-900 via-black to-purple-950 text-white"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
-      <motion.h1 className="text-6xl font-extrabold mb-10 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-        UniConnect
-      </motion.h1>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="card w-full max-w-md p-8 shadow-xl">
+        
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">UniConnect</h1>
+          <p className="text-slate-500 text-sm">
+            {isLogin ? "Welcome back to your campus." : "Join your campus network."}
+          </p>
+        </div>
 
-      <motion.div className="bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-xl w-80 flex flex-col items-center">
-        <h2 className="text-2xl font-bold mb-6">
-          {isLogin ? "Welcome Back" : "Create Account"}
-        </h2>
-
-        {/* ✅ Form uses handleSubmit from react-hook-form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="w-full">
+        <form onSubmit={isLogin ? handleStandardLogin : handleRegister} className="space-y-4">
           
-          <AnimatePresence>
-            {!isLogin && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="w-full overflow-hidden mb-4"
-              >
-                <label className="w-full text-left mb-1 text-gray-300 font-medium block">Username</label>
-                <input
-                  type="text"
-                  placeholder="JohnDoe123"
-                  className={`w-full px-4 py-3 rounded-lg bg-white/20 text-white focus:outline-none focus:ring-2 ${errors.username ? "border-2 border-red-500" : "border border-purple-500 focus:ring-purple-400"}`}
-                  {...register("username", { required: !isLogin && "Username is required" })}
-                />
-                {errors.username && <p className="text-red-400 text-xs mt-1">{errors.username.message}</p>}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="mb-4 w-full">
-            <label className="w-full text-left mb-1 text-gray-300 font-medium block">Email Address</label>
-            <input
-              type="email"
-              placeholder="example@gmail.com"
-              className={`w-full px-4 py-3 rounded-lg bg-white/20 text-white focus:outline-none focus:ring-2 ${errors.email ? "border-2 border-red-500" : "border border-purple-500 focus:ring-purple-400"}`}
-              {...register("email", { 
-                required: "Email is required",
-                pattern: { value: /^\S+@\S+$/i, message: "Invalid email format" }
-              })}
-            />
-            {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
+          {/* University Dropdown */}
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Select Campus</label>
+            <select 
+              value={selectedCollege}
+              onChange={(e) => setSelectedCollege(e.target.value)}
+              className="w-full mt-1 bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+            >
+              <option value="" disabled>-- Choose your University --</option>
+              {universities.map((uni, index) => (
+                <option key={index} value={uni}>{uni}</option>
+              ))}
+            </select>
           </div>
 
-          <div className="mb-6 w-full">
-            <label className="w-full text-left mb-1 text-gray-300 font-medium block">Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              className={`w-full px-4 py-3 rounded-lg bg-white/20 text-white focus:outline-none focus:ring-2 ${errors.password ? "border-2 border-red-500" : "border border-purple-500 focus:ring-purple-400"}`}
-              {...register("password", { 
-                required: "Password is required",
-                minLength: { value: 6, message: "Password must be at least 6 characters" }
-              })}
+          <hr className="border-slate-100 my-4" />
+
+          {/* Username Field (ONLY shows during Sign Up) */}
+          {!isLogin && (
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Username</label>
+              <input 
+                type="text" 
+                placeholder="campus_legend"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full mt-1 bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
+            <input 
+              type="email" 
+              placeholder="student@university.edu"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full mt-1 bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
             />
-            {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition disabled:opacity-50 flex justify-center items-center"
-          >
-            {/* ✅ Loading Spinner */}
-            {isLoading ? (
-              <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : null}
-            {isLoading ? "Processing..." : (isLogin ? "Login" : "Sign Up")}
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
+            <input 
+              type="password" 
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full mt-1 bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
+            />
+          </div>
+
+          <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition-colors shadow-md mt-4">
+            {isLogin ? "Log In" : "Create Account"}
           </button>
         </form>
 
-        <button onClick={toggleMode} className="mt-4 text-sm text-purple-300 hover:text-white transition underline">
-          {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
-        </button>
-
-        <div className="my-4 text-gray-400 text-sm w-full text-center border-b border-gray-600 leading-[0.1em]">
-          <span className="bg-[#1c1230] px-2 text-gray-400">OR</span>
+        {/* Toggle between Login and Sign Up */}
+        <div className="mt-6 text-center text-sm text-slate-600">
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <button 
+            onClick={() => setIsLogin(!isLogin)} 
+            className="text-indigo-600 font-bold hover:underline outline-none"
+          >
+            {isLogin ? "Sign Up" : "Log In"}
+          </button>
         </div>
 
-        <button onClick={handleGuestLogin} className="w-full bg-gradient-to-r from-indigo-600 to-blue-500 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition">
-          Continue as Guest
-        </button>
-      </motion.div>
-    </motion.div>
+        {/* Testing Buttons (Only show on Login mode to keep UI clean) */}
+        {isLogin && (
+          <div className="mt-6 flex flex-col gap-3 pt-6 border-t border-slate-100">
+            <button onClick={() => { if(!selectedCollege) toast.error("Select a campus!"); else onGuestLogin(selectedCollege); }} className="w-full bg-slate-100 text-slate-600 font-semibold py-3 rounded-xl hover:bg-slate-200 transition-colors">
+              Explore as Guest
+            </button>
+          </div>
+        )}
+
+      </div>
+    </div>
   );
 }

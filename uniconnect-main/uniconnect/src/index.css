@@ -2,23 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Default Light Mode Styles */
+/* 🌍 Permanent Light Professional Theme */
 body {
-  @apply bg-slate-50 text-slate-900 transition-colors duration-500;
-  font-family: "Poppins", sans-serif;
+  @apply bg-slate-50 text-slate-900;
+  font-family: "Inter", "Poppins", sans-serif;
 }
 
-/* Dark Mode Overrides */
-.dark body {
-  @apply bg-[#0f172a] text-white;
-}
-
-/* Update your Glass Card to react to theme */
+/* 🗂️ Clean White Cards */
 .card {
-  @apply rounded-3xl border transition-all duration-300;
-  @apply bg-white/70 border-slate-200 shadow-xl; /* Light Mode */
+  @apply bg-white border border-slate-200 rounded-2xl shadow-sm transition-all duration-300;
 }
 
-.dark .card {
-  @apply bg-white/10 backdrop-blur-2xl border-white/20 shadow-2xl; /* Dark Mode */
+/* 🔘 Professional Buttons */
+.btn-primary {
+  @apply bg-indigo-600 text-white font-medium px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors duration-200 shadow-sm;
 }
+
+.btn-secondary {
+  @apply bg-indigo-50 text-indigo-600 font-medium px-4 py-2 rounded-xl hover:bg-indigo-100 transition-colors duration-200;
+}
+
+/* Hide scrollbar */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
