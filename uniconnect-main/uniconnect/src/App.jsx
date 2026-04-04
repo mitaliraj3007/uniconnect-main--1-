@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AnimatePresence } from "framer-motion";
+import Footer from "./components/Footer.jsx";
 
 // Context & Components
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -50,7 +51,8 @@ function AppContent() {
   const hideTopButtons = ["/"].includes(location.pathname);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 relative overflow-hidden">
+    //  1. Added 'flex flex-col' to the main wrapper
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 relative overflow-hidden">
       
       <Toaster position="top-center" reverseOrder={false} />
 
@@ -85,25 +87,32 @@ function AppContent() {
         </button>
       )}
 
-      <AnimatePresence mode="wait">
-        <Routes>
-          <Route path="/" element={<Login onLogin={handleLogin} onGuestLogin={handleGuestLogin} onAdminLogin={handleAdminLogin} />} />
-          
-          {/* Main App Routes */}
-          <Route path="/feed" element={isLoggedIn && college ? <><Navbar /><Feed /></> : <Navigate to="/" />} />
-          <Route path="/friends" element={isLoggedIn ? <><Navbar /><FindFriends /></> : <Navigate to="/" />} />
-          <Route path="/chat" element={isLoggedIn ? <><Navbar /><Chat /></> : <Navigate to="/" />} />
-          <Route path="/rent" element={isLoggedIn ? <><Navbar /><RentHub /></> : <Navigate to="/" />} />
-          <Route path="/profile" element={isLoggedIn ? <><Navbar /><Profile /></> : <Navigate to="/" />} />
-          <Route path="/settings" element={isLoggedIn ? <><Navbar /><Settings /></> : <Navigate to="/" />} />
-          <Route path="/events" element={<ProtectedRoute><Navbar /><Events /></ProtectedRoute>} />
-          <Route path="/create" element={isLoggedIn ? <><Navbar /><CreatePost /></> : <Navigate to="/" />} />
-          <Route path="/reels" element={<ProtectedRoute><Navbar /><CampusReels /></ProtectedRoute>} />
-          
-          {/* Fallback Route */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </AnimatePresence>
+      {/* 2. Wrapped your Routes in 'flex-grow' */}
+      <div className="flex-grow">
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/" element={<Login onLogin={handleLogin} onGuestLogin={handleGuestLogin} onAdminLogin={handleAdminLogin} />} />
+            
+            {/* Main App Routes */}
+            <Route path="/feed" element={isLoggedIn && college ? <><Navbar /><Feed /></> : <Navigate to="/" />} />
+            <Route path="/friends" element={isLoggedIn ? <><Navbar /><FindFriends /></> : <Navigate to="/" />} />
+            <Route path="/chat" element={isLoggedIn ? <><Navbar /><Chat /></> : <Navigate to="/" />} />
+            <Route path="/rent" element={isLoggedIn ? <><Navbar /><RentHub /></> : <Navigate to="/" />} />
+            <Route path="/profile" element={isLoggedIn ? <><Navbar /><Profile /></> : <Navigate to="/" />} />
+            <Route path="/settings" element={isLoggedIn ? <><Navbar /><Settings /></> : <Navigate to="/" />} />
+            <Route path="/events" element={<ProtectedRoute><Navbar /><Events /></ProtectedRoute>} />
+            <Route path="/create" element={isLoggedIn ? <><Navbar /><CreatePost /></> : <Navigate to="/" />} />
+            <Route path="/reels" element={<ProtectedRoute><Navbar /><CampusReels /></ProtectedRoute>} />
+            
+            {/* Fallback Route */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </AnimatePresence>
+      </div>
+
+      {/*  3. Added the Footer right here at the bottom! */}
+      {!hideTopButtons && isLoggedIn && <Footer />}
+      
     </div>
   );
 }
