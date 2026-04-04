@@ -114,6 +114,20 @@ export default function Feed() {
                   </svg>
                 </button>
               </div>
+              {/* Put this inside the card displaying the post content */}
+{post.isEventRelated && post.relatedEvent && (
+  <div className="mt-3 p-3 bg-indigo-50 rounded-lg">
+    <p className="text-sm font-semibold text-indigo-800">
+      Linked Event: {post.relatedEvent.title}
+    </p>
+    <a 
+      href={`/events/${post.relatedEvent._id}`} 
+      className="inline-block mt-2 px-4 py-2 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700"
+    >
+      Go to Event Detail Page
+    </a>
+  </div>
+)}
 
             </div>
           ))}

@@ -8,6 +8,15 @@ const postSchema = new mongoose.Schema({
   content: String,
   image: String,
   likes: Number,
+  
+  // NEW: Add a reference to the Event model
+  isEventRelated: { type: Boolean, default: false },
+  relatedEvent: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Event",
+    default: null
+  },
+  
   createdAt: { type: Date, default: Date.now },
 });
 
