@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios"; 
-
+import api from "../api";
 export default function CreatePost({ onPostCreated }) {
   // Existing Post States
   const [content, setContent] = useState("");
@@ -31,13 +30,11 @@ export default function CreatePost({ onPostCreated }) {
 
     try {
       // Send the request including the new event relation fields
-      const response = await axios.post("http://localhost:5000/api/posts", {
-        content,
-        isEventRelated: isEventRelated,
-        // Only send the relatedEventId if the user checked the box
-        relatedEventId: isEventRelated ? selectedEventId : null, 
-      });
-
+const response = await api.post("/api/posts", {
+  content,
+  isEventRelated: isEventRelated,
+  relatedEventId: isEventRelated ? selectedEventId : null, 
+});
       // Clear the form fields upon success
       setContent("");
       setIsEventRelated(false);
