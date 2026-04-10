@@ -13,6 +13,11 @@ const itemSchema = new mongoose.Schema({
   sellerName: { type: String, required: true },
   sellerEmail: { type: String, required: true },
   college: { type: String, required: true },
+  status: {
+    type: String,
+    enum: ['Available', 'Rented', 'Sold'],
+    default: 'Available'
+  },
   createdAt: { type: Date, default: Date.now }
 });
 

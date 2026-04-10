@@ -7,6 +7,8 @@ import { API_BASE_URL } from "../config/api";
 
 export default function RentHub() {
   const { user, college } = useAuth();
+  
+  // ✅ Removed the duplicate items state
   const [items, setItems] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,11 +24,10 @@ export default function RentHub() {
   });
   const watchListingType = watch("listingType");
 
-  // ✅ FETCH ITEMS WITH FILTERS
+  // ✅ UNIFIED FETCH LOGIC
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      // Build the query string dynamically
       const params = new URLSearchParams({
         search: searchQuery,
         category: filterCategory,
@@ -34,7 +35,7 @@ export default function RentHub() {
         maxPrice: maxPrice
       });
 
-      const response = await fetch(`${API_BASE_URL}/items/${college.name}?${params}`);
+      const response = await fetch(`${API_BASE_URL}/items/${college?.name}?${params}`);
       const data = await response.json();
       setItems(data);
     } catch (error) {
@@ -44,15 +45,20 @@ export default function RentHub() {
     }
   };
 
-  // ✅ Trigger fetch whenever a filter changes
+  // ✅ Trigger fetch whenever a filter changes (Handles initial load too!)
   useEffect(() => {
-    // Add a slight delay (debounce) so it doesn't fetch on every single keystroke of the search bar
+    if (!college) return; // Wait until college is loaded
+    
     const delayDebounceFn = setTimeout(() => {
       fetchItems();
     }, 300);
     return () => clearTimeout(delayDebounceFn);
   }, [college, searchQuery, filterCategory, filterType, maxPrice]);
 
+  // --- UTILIZATION CALCULATIONS ---
+  const totalAvailable = items.filter(item => !item.status || item.status === 'Available').length;
+  const totalRented = items.filter(item => item.status === 'Rented').length;
+  const totalSold = items.filter(item => item.status === 'Sold').length;
 
   const onSubmit = async (data) => {
     const itemData = {
@@ -60,6 +66,7 @@ export default function RentHub() {
       sellerName: user.username || user.name,
       sellerEmail: user.email,
       college: college.name,
+      status: "Available" // Explicitly set new items as available
     };
 
     try {
@@ -98,9 +105,24 @@ export default function RentHub() {
         </button>
       </div>
 
+      {/* ✅ UTILIZATION DASHBOARD */}
+      <div className="max-w-6xl mx-auto bg-white/5 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/10 mb-6 flex justify-around text-center">
+        <div>
+           <p className="text-gray-400 font-semibold uppercase text-xs tracking-widest">Available</p>
+           <p className="text-3xl font-bold text-green-400">{totalAvailable}</p>
+        </div>
+        <div>
+           <p className="text-gray-400 font-semibold uppercase text-xs tracking-widest">Rented</p>
+           <p className="text-3xl font-bold text-blue-400">{totalRented}</p>
+        </div>
+        <div>
+           <p className="text-gray-400 font-semibold uppercase text-xs tracking-widest">Sold</p>
+           <p className="text-3xl font-bold text-red-500">{totalSold}</p>
+        </div>
+      </div>
+
       {/* ✅ ADVANCED FILTERS BAR */}
       <div className="max-w-6xl mx-auto bg-white/10 backdrop-blur-md p-5 rounded-2xl shadow-xl border border-white/10 mb-8 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-        
         {/* Search */}
         <div className="relative col-span-1 md:col-span-1">
           <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
@@ -151,91 +173,11 @@ export default function RentHub() {
             <button onClick={() => {setSearchQuery(""); setFilterCategory("All"); setFilterType("All"); setMaxPrice(10000);}} className="text-purple-400 hover:text-purple-300 underline mt-2">Clear Filters</button>
           </div>
         ) : (
-          items.map((item) => (
+          items.map((item) => {
+            const isAvailable = !item.status || item.status === 'Available';
+            
+            return (
             <motion.div key={item._id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-xl border border-white/10 flex flex-col relative hover:bg-white/15 transition duration-300">
-              <div className={`absolute top-4 left-4 text-xs font-extrabold px-3 py-1 rounded-full shadow-md ${item.listingType === 'Rent' ? 'bg-blue-500 text-white' : 'bg-emerald-500 text-white'}`}>
-                FOR {item.listingType.toUpperCase()}
-              </div>
-              <div className="h-40 bg-black/40 flex items-center justify-center text-6xl">
-                {item.category === "Furniture" ? "🛏️" : item.category === "Electronics" ? "💻" : item.category === "Books" ? "📚" : "📦"}
-              </div>
-              <div className="p-5 flex flex-col flex-grow">
-                <div className="flex justify-between items-start mb-2 gap-2">
-                  <h3 className="text-lg font-bold truncate">{item.title}</h3>
-                  <div className="text-right whitespace-nowrap">
-                    <span className="text-green-400 font-bold">₹{item.price}</span>
-                    {item.listingType === 'Rent' && <span className="text-gray-400 text-[10px] block">/ month</span>}
-                  </div>
-                </div>
-                <p className="text-gray-300 text-sm mb-4 line-clamp-2 flex-grow">{item.description}</p>
-                <div className="bg-black/30 p-2 rounded-lg mb-4 flex items-center gap-2">
-                  <span>📞</span><p className="text-xs text-purple-200 font-medium truncate">{item.contactInfo}</p>
-                </div>
-                <div className="border-t border-white/10 pt-4 flex justify-between items-center">
-                  <p className="text-xs text-gray-400 truncate pr-2">By <span className="text-purple-300 font-medium">{item.sellerName}</span></p>
-                  <a href={`mailto:${item.sellerEmail}`} className="bg-purple-600 hover:bg-purple-500 py-1 px-3 rounded-lg text-xs font-semibold transition shadow-md">Email</a>
-                </div>
-              </div>
-            </motion.div>
-          ))
-        )}
-      </div>
-
-      {/* POST ITEM MODAL (Remains unchanged from before) */}
-      <AnimatePresence>
-        {showModal && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="bg-gray-900 border border-gray-700 p-8 rounded-2xl w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto">
-              <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
-              <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Post an Item</h2>
               
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="flex gap-4 p-1 bg-black/50 rounded-lg border border-gray-700">
-                  <label className={`flex-1 text-center py-2 rounded-md cursor-pointer font-semibold transition ${watchListingType === 'Sell' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-                    <input type="radio" value="Sell" className="hidden" {...register("listingType")} />Sell
-                  </label>
-                  <label className={`flex-1 text-center py-2 rounded-md cursor-pointer font-semibold transition ${watchListingType === 'Rent' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-                    <input type="radio" value="Rent" className="hidden" {...register("listingType")} />Rent Out
-                  </label>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-300 mb-1">Item Title</label>
-                  <input type="text" placeholder="e.g., Mini Fridge" className="w-full bg-black/50 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500" {...register("title", { required: true })} />
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm text-gray-300 mb-1">Price (₹)</label>
-                    <div className="relative">
-                      <input type="number" placeholder="500" className="w-full bg-black/50 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500" {...register("price", { required: true })} />
-                      {watchListingType === 'Rent' && <span className="absolute right-3 top-3 text-gray-400 text-sm">/mo</span>}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-sm text-gray-300 mb-1">Category</label>
-                    <select className="w-full bg-black/50 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500" {...register("category")}>
-                      <option value="Books">Books & Notes</option>
-                      <option value="Electronics">Electronics</option>
-                      <option value="Furniture">Room/Furniture</option>
-                      <option value="Misc">Other</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-300 mb-1">Contact Info</label>
-                  <input type="text" placeholder="Phone or Room No." className="w-full bg-black/50 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500" {...register("contactInfo", { required: true })} />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-300 mb-1">Description</label>
-                  <textarea rows="2" placeholder="Condition, pickup details..." className="w-full bg-black/50 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500" {...register("description", { required: true })}></textarea>
-                </div>
-                <button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3.5 rounded-lg hover:opacity-90 transition mt-2">
-                  {watchListingType === 'Rent' ? 'List for Rent' : 'List for Sale'}
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
+              {/* Type Tag (Top Left) */}
+              <div className={`absolute top-4 left-4 text-xs font-extrabold px-3 py-1 rounded-

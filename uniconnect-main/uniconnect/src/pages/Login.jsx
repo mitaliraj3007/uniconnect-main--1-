@@ -76,8 +76,17 @@ export default function Login({ onLogin, onGuestLogin, onAdminLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="card w-full max-w-md p-8 shadow-xl">
+    // 1. ADDED BACKGROUND IMAGE HERE
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative bg-cover bg-center"
+      style={{ backgroundImage: "url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=2070&auto=format&fit=crop')" }}
+    >
+      
+      {/* 2. ADDED DARK BLURRED OVERLAY TO MAKE CARD STAND OUT */}
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm z-0"></div>
+
+      {/* 3. ADDED 'bg-white rounded-2xl relative z-10' SO IT SITS ON TOP OF THE OVERLAY */}
+      <div className="card w-full max-w-md p-8 shadow-2xl bg-white rounded-2xl relative z-10">
         
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">UniConnect</h1>
